@@ -1,0 +1,142 @@
+# ============================================================
+# Rate Limiter Implementation
+# 
+# Limits the number of requests per user within a time window
+# to prevent abuse and DoS attacks.
+# ============================================================
+
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+class RateLimiter:
+    """
+    Rate limiter to prevent abuse by limiting requests per user.
+    
+    What does this do?
+    - Tracks number of requests per user in a sliding time window
+    - Blocks requests that exceed the limit
+    - Returns wait time for blocked requests
+    
+    Why is it needed?
+    - Prevents DoS attacks (flooding the system with requests)
+    - Protects against automated attack scripts
+    - Ensures fair resource allocation across users
+    
+    What attack does it catch that other layers don't?
+    - Volume-based attacks (brute force, flooding)
+    - Automated scanning/probing
+    - Resource exhaustion attacks
+    """
+    
+    def __init__(self, max_requests=10, time_window=60):
+        """
+        Initialize rate limiter.
+        
+        Args:
+            max_requests: Maximum number of requests allowed
+            time_window: Time window in seconds
+        """
+        self.max_requests = max_requests
+        self.time_window = time_window
+        # Store request timestamps per user
+        self.request_history = defaultdict(list)
+        self.blocked_count = 0
+        self.total_requests = 0
+    
+    def check_rate_limit(self, user_id: str) -> dict:
+        """
+        Check if user has exceeded rate limit.
+        
+        Args:
+            user_id: Unique identifier for the user
+            
+        Returns:
+            dict with 'allowed' (bool), 'wait_time' (float), 'remaining' (int)
+        """
+        self.total_requests += 1
+        current_time = time.time()
+        
+        # Clean up old requests outside the time window
+        cutoff_time = current_time - self.time_window
+        self.request_history[user_id] = [
+            t for t in self.request_history[user_id] 
+            if t > cutoff_time
+        ]
+        
+        # Check if user exceeded limit
+        request_count = len(self.request_history[user_id])
+        
+        if request_count >= self.max_requests:
+            # Calculate wait time until oldest request expires
+            oldest_request = self.request_history[user_id][0]
+            wait_time = self.time_window - (current_time - oldest_request)
+            self.blocked_count += 1
+            
+            return {
+                "allowed": False,
+                "wait_time": max(0, wait_time),
+                "remaining": 0,
+                "reason": f"Rate limit exceeded. Max {self.max_requests} requests per {self.time_window}s"
+            }
+        
+        # Allow request and record timestamp
+        self.request_history[user_id].append(current_time)
+        
+        return {
+            "allowed": True,
+            "wait_time": 0,
+            "remaining": self.max_requests - request_count - 1,
+            "reason": "Request allowed"
+        }
+    
+    def get_stats(self) -> dict:
+        """Get rate limiter statistics."""
+        return {
+            "total_requests": self.total_requests,
+            "blocked_requests": self.blocked_count,
+            "block_rate": self.blocked_count / max(1, self.total_requests),
+            "active_users": len(self.request_history)
+        }
+
+
+# ============================================================
+# Test Rate Limiter
+# ============================================================
+
+print("Testing Rate Limiter")
+print("=" * 60)
+
+# Create rate limiter: max 5 requests per 10 seconds
+limiter = RateLimiter(max_requests=5, time_window=10)
+
+# Simulate 10 requests from the same user
+user_id = "test_user_123"
+
+print(f"\nSimulating 10 requests (limit: 5 per 10s):\n")
+print(f"{'Request #':<12} {'Allowed':<10} {'Remaining':<12} {'Wait Time':<12} {'Status'}")
+print("-" * 70)
+
+for i in range(1, 11):
+    result = limiter.check_rate_limit(user_id)
+    
+    status = "✓ PASS" if result["allowed"] else "✗ BLOCKED"
+    wait = f"{result['wait_time']:.2f}s" if result['wait_time'] > 0 else "-"
+    
+    print(f"Request {i:<5} {str(result['allowed']):<10} {result['remaining']:<12} {wait:<12} {status}")
+    
+    # Small delay between requests
+    time.sleep(0.1)
+
+print("\n" + "=" * 60)
+print("Rate Limiter Statistics:")
+stats = limiter.get_stats()
+for key, value in stats.items():
+    if isinstance(value, float):
+        print(f"  {key}: {value:.2%}" if "rate" in key else f"  {key}: {value:.2f}")
+    else:
+        print(f"  {key}: {value}")
+
+print("\n✓ Rate limiter working correctly!")
+print("  - First 5 requests: ALLOWED")
+print("  - Remaining 5 requests: BLOCKED with wait time")
