@@ -1,6 +1,8 @@
 # Assignment 11: Defense-in-Depth Pipeline - Individual Report
 
 **Student:** Tran Dinh Minh Vuong  
+**Student ID:** 2A202600495  
+**Class:** E403  
 **Course:** AICB-P1 — AI Agent Development  
 **Date:** April 16, 2026
 
