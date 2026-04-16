@@ -38,9 +38,21 @@ def detect_injection(user_input: str) -> bool:
         True if injection detected, False otherwise
     """
     INJECTION_PATTERNS = [
-        # TODO: Add at least 5 regex patterns
-        # Example:
-        # r"ignore (all )?(previous|above) instructions",
+        r"ignore\s+(all\s+)?(previous|above|prior|earlier)\s+(instructions|prompts|commands|rules)",
+        r"you\s+are\s+now\s+(a\s+|an\s+)?",
+        r"(show|reveal|display|print)\s+(me\s+)?(your|the)\s+(system\s+)?(prompt|instructions|rules)",
+        r"(pretend|act|behave|simulate)\s+(you\s+are|as|like|to\s+be)\s+(a\s+|an\s+)?(unrestricted|unfiltered|uncensored|AI\s+without)",
+        r"(DAN|do\s+anything\s+now)",
+        r"(fill\s+in|complete)\s+(the\s+)?(blank|following|these|this)",
+        r"translate\s+(all\s+)?(your|the)\s+(instructions|prompt|system|configuration)",
+        r"(hypothetically|imagine|suppose|let's\s+pretend).{0,50}(reveal|show|system|prompt|instructions)",
+        r"(security\s+team|CISO|auditor|admin|developer|incident|ticket\s*#|audit\s+report)",
+        r"(password|api\s+key|secret|credential|token)\s*(is|are|:|=)",
+        r"(output|format|generate|provide|representation)\s+(as|in|of|your)\s+(your\s+)?(JSON|YAML|XML|markdown|config|settings)",
+        r"(decode|decrypt|deobfuscate|base64|rot13)",
+        r"(confirm|verify|validate)\s+(that|if|whether)\s+(the\s+)?(password|key|credential)",
+        r"(internal\s+system|database\s+connection|api\s+endpoint|connection\s+string)",
+        r"(bypass|circumvent|override|disable)\s+(safety|filter|guardrail|restriction)",
     ]
 
     for pattern in INJECTION_PATTERNS:
@@ -68,14 +80,23 @@ def topic_filter(user_input: str) -> bool:
     Returns:
         True if input should be BLOCKED (off-topic or blocked topic)
     """
+    if not user_input or len(user_input.strip()) == 0:
+        return True
+    
     input_lower = user_input.lower()
 
-    # TODO: Implement logic:
-    # 1. If input contains any blocked topic -> return True
-    # 2. If input doesn't contain any allowed topic -> return True
-    # 3. Otherwise -> return False (allow)
-
-    pass  # Replace with your implementation
+    # 1. Check blocked topics first
+    for blocked_topic in BLOCKED_TOPICS:
+        if blocked_topic in input_lower:
+            return True
+    
+    # 2. Check if input contains any allowed topic
+    for allowed_topic in ALLOWED_TOPICS:
+        if allowed_topic in input_lower:
+            return False
+    
+    # 3. No allowed topic found -> block
+    return True
 
 
 # ============================================================
@@ -128,14 +149,24 @@ class InputGuardrailPlugin(base_plugin.BasePlugin):
         self.total_count += 1
         text = self._extract_text(user_message)
 
-        # TODO: Implement logic:
-        # 1. Call detect_injection(text)
-        #    - If True: increment blocked_count, return self._block_response("...")
-        # 2. Call topic_filter(text)
-        #    - If True: increment blocked_count, return self._block_response("...")
-        # 3. If both are False: return None (let message through)
-
-        pass  # Replace with your implementation
+        # 1. Check for prompt injection
+        if detect_injection(text):
+            self.blocked_count += 1
+            return self._block_response(
+                "⚠️ Security Alert: Your message was blocked due to potential prompt injection. "
+                "Please rephrase your question without attempting to manipulate the system."
+            )
+        
+        # 2. Check topic filter
+        if topic_filter(text):
+            self.blocked_count += 1
+            return self._block_response(
+                "❌ I apologize, but I can only assist with banking-related questions. "
+                "Please ask about accounts, transactions, loans, savings, or other banking services."
+            )
+        
+        # 3. Message is safe -> let it through
+        return None
 
 
 # ============================================================

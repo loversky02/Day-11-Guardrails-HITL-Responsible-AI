@@ -1,0 +1,167 @@
+# ============================================================
+# TODO 14: HITL Flowchart for VinBank Agent
+#
+# Workflow incorporating 3 decision points
+# ============================================================
+
+"""
+HITL WORKFLOW FLOWCHART
+=======================
+
+                    [Customer Query]
+                           |
+                           v
+                  [Input Guardrails]
+                    (Injection, Topic)
+                           |
+                           v
+                  [Agent Processes Query]
+                           |
+                           v
+                  [Generate Response + 
+                   Confidence Score]
+                           |
+                           v
+              ┌────────────┴────────────┐
+              |                         |
+              v                         v
+    [High-Risk Action?]         [Check Confidence]
+    (transfer, delete, etc)            |
+              |                         |
+              |                ┌────────┼────────┐
+              |                |        |        |
+              v                v        v        v
+         YES: DP#1        >=0.9    0.7-0.9   <0.7
+              |            DP#3      DP#2     DP#1
+              |             |         |        |
+              v             v         v        v
+    ┌─────────────────────────────────────────────┐
+    |                                             |
+    |  DECISION POINT #1: Human-as-Tiebreaker    |
+    |  ----------------------------------------   |
+    |  Trigger: Amount >50M OR New recipient     |
+    |           OR Confidence <0.7               |
+    |  Action: BLOCK & Queue for approval        |
+    |  Context: Transaction details, history,    |
+    |           balance, risk score              |
+    |  Time: <5 minutes                          |
+    |                                             |
+    └──────────────┬──────────────────────────────┘
+                   |
+                   v
+            [Human Reviews]
+                   |
+          ┌────────┴────────┐
+          v                 v
+      [Approve]         [Reject]
+          |                 |
+          v                 v
+    [Send Response]   [Send Rejection]
+          |                 |
+          └────────┬────────┘
+                   |
+                   v
+              [Log & End]
+
+
+    ┌─────────────────────────────────────────────┐
+    |                                             |
+    |  DECISION POINT #2: Human-in-the-Loop      |
+    |  ----------------------------------------   |
+    |  Trigger: Confidence 0.7-0.9 for           |
+    |           financial advice                 |
+    |  Action: Queue for review before sending   |
+    |  Context: Query, proposed response,        |
+    |           confidence, product info,        |
+    |           customer profile                 |
+    |  Time: <10 minutes                         |
+    |                                             |
+    └──────────────┬──────────────────────────────┘
+                   |
+                   v
+            [Human Reviews]
+                   |
+          ┌────────┴────────┐
+          v                 v
+    [Approve/Edit]      [Reject/Rewrite]
+          |                 |
+          v                 v
+    [Send Response]   [Send Modified Response]
+          |                 |
+          └────────┬────────┘
+                   |
+                   v
+         [Update Confidence Model]
+                   |
+                   v
+              [Log & End]
+
+
+    ┌─────────────────────────────────────────────┐
+    |                                             |
+    |  DECISION POINT #3: Human-on-the-Loop      |
+    |  ----------------------------------------   |
+    |  Trigger: Confidence >=0.9 for             |
+    |           routine queries                  |
+    |  Action: AUTO-SEND with monitoring         |
+    |  Context: Conversation logs, metrics,      |
+    |           flagged issues                   |
+    |  Time: Periodic review (every 2 hours)     |
+    |                                             |
+    └──────────────┬──────────────────────────────┘
+                   |
+                   v
+         [Send Response Immediately]
+                   |
+                   v
+            [Log to Monitor Queue]
+                   |
+                   v
+         [Human Periodic Review]
+                   |
+          ┌────────┴────────┐
+          v                 v
+      [No Issues]      [Issue Found]
+          |                 |
+          v                 v
+    [Continue]      [Flag for Training]
+          |                 |
+          └────────┬────────┘
+                   |
+                   v
+         [Update Model/Rules]
+                   |
+                   v
+              [End]
+
+
+SUMMARY OF ROUTING LOGIC:
+=========================
+
+1. High-Risk Actions (transfer_money, delete_account, etc.)
+   → Always route to DP#1 (Human-as-Tiebreaker)
+   → Block until human approves
+
+2. Confidence >= 0.9 + General Query
+   → Route to DP#3 (Human-on-the-Loop)
+   → Send immediately, monitor later
+
+3. Confidence 0.7-0.9 + Financial Advice
+   → Route to DP#2 (Human-in-the-Loop)
+   → Queue for review before sending
+
+4. Confidence < 0.7
+   → Route to DP#1 (Human-as-Tiebreaker)
+   → Block until human decides
+
+
+KEY BENEFITS:
+=============
+✓ High-risk actions always require approval
+✓ Medium confidence gets human review
+✓ High confidence enables fast response
+✓ Continuous learning from human feedback
+✓ Balance between speed and safety
+"""
+
+print(__doc__)

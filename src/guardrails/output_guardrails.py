@@ -41,12 +41,11 @@ def content_filter(response: str) -> dict:
 
     # PII patterns to check
     PII_PATTERNS = {
-        # TODO: Add regex patterns for:
-        # - VN phone number: r"0\d{9,10}"
-        # - Email: r"[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}"
-        # - National ID (CMND/CCCD): r"\b\d{9}\b|\b\d{12}\b"
-        # - API key pattern: r"sk-[a-zA-Z0-9-]+"
-        # - Password pattern: r"password\s*[:=]\s*\S+"
+        "VN phone number": r"0\d{9,10}",
+        "Email": r"[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}",
+        "National ID (CMND/CCCD)": r"\b\d{9}\b|\b\d{12}\b",
+        "API key": r"sk-[a-zA-Z0-9-]+",
+        "Password": r"password\s*[:=]\s*\S+",
     }
 
     for name, pattern in PII_PATTERNS.items():

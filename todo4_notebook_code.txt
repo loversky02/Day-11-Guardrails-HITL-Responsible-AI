@@ -1,0 +1,89 @@
+# ============================================================
+# TODO 4: Implement topic_filter() - COMPLETED
+#
+# Check if user_input belongs to allowed topics.
+# Return True if input should be BLOCKED (off-topic or blocked topic).
+# ============================================================
+
+ALLOWED_TOPICS = [
+    "banking", "account", "transaction", "transfer",
+    "loan", "interest", "savings", "credit",
+    "deposit", "withdrawal", "balance", "payment",
+    # Vietnamese (with and without diacritics)
+    "tai khoan", "tài khoản",
+    "giao dich", "giao dịch",
+    "tiet kiem", "tiết kiệm",
+    "lai suat", "lãi suất",
+    "chuyen tien", "chuyển tiền",
+    "the tin dung", "thẻ tín dụng",
+    "so du", "số dư",
+    "vay", "ngan hang", "ngân hàng",
+    "atm", "card", "debit",
+    "mortgage", "investment", "finance", "money",
+]
+
+# Blocked topics (if detected -> block immediately)
+BLOCKED_TOPICS = [
+    "hack", "exploit", "weapon", "drug", "illegal",
+    "violence", "gambling", "porn", "sex", "adult",
+    "bomb", "kill", "murder", "suicide",
+    "racist", "discrimination", "hate", "terrorism",
+]
+
+def topic_filter(user_input: str) -> bool:
+    """Check if input is off-topic or contains blocked topics.
+    
+    Args:
+        user_input: The user's message
+    
+    Returns:
+        True if input should be BLOCKED (off-topic or blocked topic)
+    """
+    
+    # Handle empty input
+    if not user_input or len(user_input.strip()) == 0:
+        return True  # Block empty messages
+    
+    input_lower = user_input.lower()
+    
+    # STEP 1: Check for BLOCKED topics (highest priority)
+    for blocked_topic in BLOCKED_TOPICS:
+        if blocked_topic in input_lower:
+            return True  # BLOCK immediately
+    
+    # STEP 2: Check for ALLOWED topics
+    # If input contains at least one allowed topic -> ALLOW
+    for allowed_topic in ALLOWED_TOPICS:
+        if allowed_topic in input_lower:
+            return False  # ALLOW (on-topic)
+    
+    # STEP 3: If no allowed topic found -> BLOCK (off-topic)
+    return True  # BLOCK (off-topic)
+
+
+# Test
+test_cases = [
+    ("What is the 12-month savings rate?", False),    # on-topic
+    ("How to hack a computer?", True),                # blocked topic
+    ("Recipe for chocolate cake", True),              # off-topic
+    ("I want to transfer money to another account", False),  # on-topic
+    ("Lãi suất tiết kiệm là bao nhiêu?", False),     # Vietnamese on-topic
+    ("What is the weather?", True),                   # off-topic
+    ("How to make a bomb?", True),                    # blocked topic
+    ("", True),                                       # empty
+]
+
+print("Testing topic_filter():")
+print("=" * 60)
+
+passed = 0
+for text, expected in test_cases:
+    result = topic_filter(text)
+    status = "✅ PASS" if result == expected else "❌ FAIL"
+    if result == expected:
+        passed += 1
+    action = "BLOCK" if result else "ALLOW"
+    print(f"{status} | {action:5} | '{text[:40]}'")
+
+print("=" * 60)
+print(f"Results: {passed}/{len(test_cases)} passed ({passed/len(test_cases)*100:.0f}%)")

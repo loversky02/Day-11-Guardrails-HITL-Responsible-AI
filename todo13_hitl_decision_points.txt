@@ -1,0 +1,42 @@
+# ============================================================
+# TODO 13: Design 3 HITL Decision Points
+#
+# Fill in 3 decision points for the VinBank agent.
+# ============================================================
+
+hitl_decision_points = [
+    {
+        "id": 1,
+        "scenario": "Customer requests a large money transfer to a new recipient",
+        "trigger": "Transfer amount > 50M VND OR recipient not in trusted list",
+        "hitl_model": "Human-as-tiebreaker",
+        "context_for_human": "Transaction amount, recipient details, customer's transaction history (last 30 days), current account balance, risk score",
+        "expected_response_time": "< 5 minutes",
+    },
+    {
+        "id": 2,
+        "scenario": "Agent provides financial advice with medium confidence",
+        "trigger": "Confidence score between 0.7 and 0.9 for investment/loan recommendations",
+        "hitl_model": "Human-in-the-loop",
+        "context_for_human": "Customer query, agent's proposed response, confidence score, relevant product information, customer's financial profile",
+        "expected_response_time": "< 10 minutes",
+    },
+    {
+        "id": 3,
+        "scenario": "Agent handles routine inquiries with high confidence",
+        "trigger": "Confidence score >= 0.9 for general queries (balance, transaction history, branch info)",
+        "hitl_model": "Human-on-the-loop",
+        "context_for_human": "Conversation logs, response sent, customer satisfaction metrics, flagged issues only",
+        "expected_response_time": "Periodic review (every 2 hours or when flagged)",
+    },
+]
+
+# Print for review
+print("HITL Decision Points:")
+print("=" * 60)
+
+for dp in hitl_decision_points:
+    print(f"\n--- Decision Point #{dp['id']} ---")
+    for key, value in dp.items():
+        if key != "id":
+            print(f"  {key}: {value}")
