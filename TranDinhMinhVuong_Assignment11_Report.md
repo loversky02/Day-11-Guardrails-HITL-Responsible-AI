@@ -8,6 +8,38 @@
 
 ---
 
+## Framework Choice
+
+**Selected Framework:** Google ADK + NVIDIA NeMo Guardrails (Combined)
+
+**Rationale:**
+
+This implementation uses a hybrid approach combining two complementary frameworks:
+
+1. **Google ADK (Agent Development Kit)**
+   - Provides the core agent framework with `llm_agent` and `runners`
+   - Implements `BasePlugin` architecture for custom guardrails
+   - Offers callback hooks (`on_before_model_call`, `on_after_model_call`) for intercepting and modifying requests/responses
+   - Enables programmatic, Python-based guardrail logic
+
+2. **NVIDIA NeMo Guardrails**
+   - Provides declarative rule-based protection using Colang DSL
+   - Offers pattern matching for prompt injection, jailbreaks, and topic filtering
+   - Includes built-in flows for common attack patterns
+   - Enables non-technical stakeholders to define safety rules
+
+**Why Combined?**
+
+The combination creates true defense-in-depth:
+- ADK plugins catch attacks through programmatic logic (regex, ML models, API calls)
+- NeMo catches attacks through declarative rules (Colang patterns, flow control)
+- If one layer misses an attack variant, the other layer provides backup
+- Different attack vectors require different detection approaches—having both maximizes coverage
+
+This hybrid approach aligns with the assignment's emphasis on layered security and demonstrates understanding that no single framework can catch all attacks.
+
+---
+
 ## Question 1: Layer Analysis (10 points)
 
 **For each of the 7 attack prompts in Test 2, which safety layer caught it first?**

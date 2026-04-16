@@ -8,6 +8,17 @@
 
 ---
 
+## Framework Choice
+
+**Selected Framework:** Google ADK + NVIDIA NeMo Guardrails (Combined)
+
+**Rationale:**
+- **Google ADK**: Provides agent framework with BasePlugin architecture for implementing custom input/output guardrails with callback hooks
+- **NeMo Guardrails**: Offers rule-based protection using Colang DSL for pattern matching and flow control
+- **Combined Approach**: Creates defense-in-depth by layering programmatic checks (ADK plugins) with declarative rules (NeMo Colang), maximizing coverage against diverse attack vectors
+
+---
+
 ## Question 1: Layer Analysis (10 points)
 
 | # | Attack Prompt | First Layer | All Layers |
